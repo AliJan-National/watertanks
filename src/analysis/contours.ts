@@ -478,20 +478,25 @@ export function contourAreas(bands: ContourBand[]): Record<BandId, number> {
  * Uses hydraulic flow path connectivity and sub-cell marching squares so the flood boundary
  * forms a contiguous, merged polygon centered at the tank without isolated floating puddle rings.
  */
+/**
+ * Fluent water extent shoreline contour(s) wrapping the flood footprint.
+ * Traces the natural hydraulic shoreline of where water travelled and accumulated across terrain.
+ */
 export function waterExtentRings(result: SimulationResult): number[][][] {
   const { nx, ny, dx, x0, y0, crs } = result.grid;
   const thresh = Math.max(0.001, result.options.reportingDepthM ?? 0.005);
   const arr = result.arrivalTime;
   const vel = result.maxVelocity;
 
-  // 1. Mark cells that received water: either depth >= threshold, or active sheet flow transit
+  // 1. Mark cells that received water: either depth >= threshold, active sheet flow transit, or classified damage
   const raw = new Float32Array(nx * ny);
   for (let i = 0; i < nx * ny; i++) {
     const d = result.maxDepth[i];
     const a = arr ? arr[i] : -1;
     const v = vel ? vel[i] : 0;
-    const wet = (Number.isFinite(d) && d >= thresh) || (a >= 0 && (d >= 0.0005 || v >= 0.05));
-    raw[i] = wet ? Math.max(thresh, Number.isFinite(d) ? d : thresh) : 0;
+    const s = result.damageScore ? result.damageScore[i] : 0;
+    const wet = (Number.isFinite(d) && d >= thresh) || (a >= 0 && (d >= 0.0005 || v >= 0.05)) || s > 0;
+    raw[i] = wet ? Math.max(1, s > 0 ? s : 1) : 0;
   }
 
   // 2. Morphological closing (3x3 dilation then erosion) to bridge thin supercritical flow paths
@@ -537,92 +542,7 @@ export function waterExtentRings(result: SimulationResult): number[][][] {
     }
   }
 
-  // 3. Centering on the tank: Connected component flood-fill starting from the tank source footprint.
-  // All flooded areas (NW valley, SE corridor, SW town) connect through active breach transit paths.
-  const cx = Math.floor(nx / 2);
-  const cy = Math.floor(ny / 2);
-  const connected = new Uint8Array(nx * ny);
-  const queue: number[] = [];
-
-  const seedRadius = Math.max(3, Math.ceil(35 / dx));
-  for (let dy = -seedRadius; dy <= seedRadius; dy++) {
-    const yy = cy + dy;
-    if (yy < 0 || yy >= ny) continue;
-    for (let dx_ = -seedRadius; dx_ <= seedRadius; dx_++) {
-      const xx = cx + dx_;
-      if (xx < 0 || xx >= nx) continue;
-      const idx = yy * nx + xx;
-      if (closed[idx] > 0 && !connected[idx]) {
-        connected[idx] = 1;
-        queue.push(idx);
-      }
-    }
-  }
-
-  let head = 0;
-  while (head < queue.length) {
-    const curr = queue[head++];
-    const x = curr % nx;
-    const y = Math.floor(curr / nx);
-    for (let dy = -1; dy <= 1; dy++) {
-      const yy = y + dy;
-      if (yy < 0 || yy >= ny) continue;
-      const row = yy * nx;
-      for (let dx_ = -1; dx_ <= 1; dx_++) {
-        const xx = x + dx_;
-        if (xx < 0 || xx >= nx) continue;
-        const nIdx = row + xx;
-        if (closed[nIdx] > 0 && !connected[nIdx]) {
-          connected[nIdx] = 1;
-          queue.push(nIdx);
-        }
-      }
-    }
-  }
-
-  // Also connect any traversed downstream cells that ponded by tracing upstream
-  if (arr) {
-    for (let i = 0; i < nx * ny; i++) {
-      if (closed[i] > 0 && !connected[i] && arr[i] >= 0) {
-        let cur = i;
-        const path: number[] = [];
-        for (let step = 0; step < 80; step++) {
-          if (connected[cur]) {
-            for (const p of path) connected[p] = 1;
-            break;
-          }
-          path.push(cur);
-          const px = cur % nx;
-          const py = Math.floor(cur / nx);
-          let bestNeighbour = -1;
-          let minArr = arr[cur];
-          for (let dy = -1; dy <= 1; dy++) {
-            const ny_ = py + dy;
-            if (ny_ < 0 || ny_ >= ny) continue;
-            for (let dx_ = -1; dx_ <= 1; dx_++) {
-              if (dx_ === 0 && dy === 0) continue;
-              const nx_ = px + dx_;
-              if (nx_ < 0 || nx_ >= nx) continue;
-              const nIdx = ny_ * nx + nx_;
-              if (arr[nIdx] >= 0 && arr[nIdx] < minArr) {
-                minArr = arr[nIdx];
-                bestNeighbour = nIdx;
-              }
-            }
-          }
-          if (bestNeighbour >= 0) cur = bestNeighbour;
-          else break;
-        }
-      }
-    }
-  }
-
-  // Zero out any detached cells that are not connected to the tank's inundation footprint
-  for (let i = 0; i < nx * ny; i++) {
-    if (!connected[i]) closed[i] = NaN;
-  }
-
-  // 4. Gaussian blur for continuous, fluent organic water boundary
+  // 3. Gaussian blur for continuous, fluent organic water boundary
   const smoothed = blur(closed, nx, ny, 2);
   for (let i = 0; i < smoothed.length; i++) if (!Number.isFinite(smoothed[i])) smoothed[i] = 0;
   const grid: Grid2D = { nx, ny, v: smoothed };
@@ -634,8 +554,8 @@ export function waterExtentRings(result: SimulationResult): number[][][] {
     return [Number(ll.lng.toFixed(7)), Number(ll.lat.toFixed(7))];
   };
 
-  const minRingArea = Math.max(6, Math.ceil(1200 / (dx * dx)));
-  const rawRings = stitch(marchingSquares(grid, thresh * 0.5));
+  const minRingArea = Math.max(3, Math.ceil(300 / (dx * dx)));
+  const rawRings = stitch(marchingSquares(grid, 0.5));
   const smoothRings = rawRings
     .filter((r) => Math.abs(ringArea(r)) >= minRingArea)
     .sort((a, b) => Math.abs(ringArea(b)) - Math.abs(ringArea(a)))

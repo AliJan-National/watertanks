@@ -331,23 +331,15 @@ export default function MapView({ onTankMoved }: { onTankMoved?: (lng: number, l
     else {
       map.addSource(id, { type: "geojson", data });
       map.addLayer({
-        id: "extent-fill",
-        type: "fill",
-        source: id,
-        paint: {
-          "fill-color": "#0284c7",
-          "fill-opacity": 0.16,
-        },
-      });
-      map.addLayer({
         id: "extent-casing",
         type: "line",
         source: id,
         layout: { "line-join": "round", "line-cap": "round" },
         paint: {
-          "line-color": "#091e3a",
-          "line-width": 4.0,
-          "line-opacity": 0.95,
+          "line-color": "#ffffff",
+          "line-width": 4.5,
+          "line-opacity": 0.85,
+          "line-blur": 0.6,
         },
       });
       map.addLayer({
@@ -356,20 +348,22 @@ export default function MapView({ onTankMoved }: { onTankMoved?: (lng: number, l
         source: id,
         layout: { "line-join": "round", "line-cap": "round" },
         paint: {
-          "line-color": "#0284c7",
-          "line-width": 2.2,
+          "line-color": "#0a0f1d",
+          "line-width": 2.6,
           "line-opacity": 1.0,
         },
       });
     }
-    if (map.getLayer("extent-fill")) {
-      map.setLayoutProperty("extent-fill", "visibility", cfg?.visible ? "visible" : "none");
-    }
+    const op = cfg?.opacity ?? 1.0;
     if (map.getLayer("extent-casing")) {
       map.setLayoutProperty("extent-casing", "visibility", cfg?.visible ? "visible" : "none");
+      map.setPaintProperty("extent-casing", "line-opacity", op * 0.85);
+      map.moveLayer("extent-casing");
     }
     if (map.getLayer("extent-line")) {
       map.setLayoutProperty("extent-line", "visibility", cfg?.visible ? "visible" : "none");
+      map.setPaintProperty("extent-line", "line-opacity", op);
+      map.moveLayer("extent-line");
     }
   }, [result, layers, mapReady]);
 
@@ -488,12 +482,11 @@ export default function MapView({ onTankMoved }: { onTankMoved?: (lng: number, l
 
     // These overlays sit above the depth rasters
     for (const id of [
-      "extent-fill",
-      "extent-casing",
-      "extent-line",
       "damage-halo",
       "damage-fill",
       "damage-outline",
+      "extent-casing",
+      "extent-line",
     ]) {
       if (map.getLayer(id)) map.moveLayer(id);
     }

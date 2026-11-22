@@ -1190,6 +1190,12 @@ export default function App() {
                           </span>
                         </div>
                       ))}
+                      {layer("extent")?.visible && (
+                        <div className="swatch" style={{ marginTop: 5, paddingTop: 4, borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+                          <span style={{ display: "inline-block", width: 14, height: 2, background: "#0a0f1d", outline: "1px solid rgba(255,255,255,0.85)", borderRadius: 1, marginRight: 6, verticalAlign: "middle" }} />
+                          <span style={{ color: "#e2e8f0" }}>Inundation boundary</span>
+                        </div>
+                      )}
                       <div style={{ color: "var(--dim)", fontSize: 10, marginTop: 3 }}>
                         Ramp is interpolated; swatches mark band limits
                       </div>

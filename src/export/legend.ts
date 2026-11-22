@@ -82,16 +82,19 @@ export function damageLegendPng(result: SimulationResult, areaKm2: number): stri
   ctx.fillStyle = "#cbd5e1";
   ctx.fillText("Storage tank location (origin)", 48, y);
 
-  // 2. Fluent flood shoreline
+  // 2. Inundation boundary (flood perimeter line)
   y += 22;
-  ctx.strokeStyle = "#0284c7";
-  ctx.lineWidth = 2.2;
   ctx.beginPath();
   ctx.moveTo(14, y - 4);
   ctx.bezierCurveTo(22, y - 10, 28, y + 2, 36, y - 4);
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  ctx.strokeStyle = "#0a0f1d";
+  ctx.lineWidth = 2.2;
   ctx.stroke();
   ctx.fillStyle = "#cbd5e1";
-  ctx.fillText("Fluent water extent shoreline", 48, y);
+  ctx.fillText("Inundation boundary (flood perimeter)", 48, y);
 
   // Summary footer strip
   y += 18;

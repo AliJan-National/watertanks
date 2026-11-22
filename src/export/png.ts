@@ -259,16 +259,19 @@ export async function buildPng(o: PngOptions): Promise<Blob> {
   ctx.fillStyle = "#cbd5e1";
   ctx.fillText("Storage tank location (origin)", lx + 48 * s, lY);
 
-  // 2. Fluent flood shoreline
+  // 2. Inundation boundary (flood perimeter line)
   lY += 23 * s;
-  ctx.strokeStyle = "#0284c7";
-  ctx.lineWidth = 2.5 * s;
   ctx.beginPath();
   ctx.moveTo(lx + 14 * s, lY - 4 * s);
   ctx.bezierCurveTo(lx + 22 * s, lY - 11 * s, lx + 28 * s, lY + 3 * s, lx + 36 * s, lY - 4 * s);
+  ctx.strokeStyle = "#ffffff";
+  ctx.lineWidth = 4.5 * s;
+  ctx.stroke();
+  ctx.strokeStyle = "#0a0f1d";
+  ctx.lineWidth = 2.5 * s;
   ctx.stroke();
   ctx.fillStyle = "#cbd5e1";
-  ctx.fillText("Fluent water extent shoreline", lx + 48 * s, lY);
+  ctx.fillText("Inundation boundary (flood perimeter)", lx + 48 * s, lY);
 
   // 7. ArcGIS Subdivided Metric Scale Bar (Bottom-Right)
   const barW = 200 * s;

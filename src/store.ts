@@ -41,7 +41,7 @@ export const DEFAULT_LAYERS: LayerState[] = [
   { id: "arrival", label: "Arrival time", visible: false, opacity: 0.8 },
   { id: "velocity", label: "Peak velocity", visible: false, opacity: 0.8 },
   { id: "hazard", label: "Hazard class (d × v)", visible: false, opacity: 0.8 },
-  { id: "extent", label: "Inundation extent", visible: true, opacity: 1 },
+  { id: "extent", label: "Inundation boundary", visible: true, opacity: 1 },
   { id: "damage", label: "Affected areas & hazard bands", visible: true, opacity: 0.9 },
   { id: "hillshade", label: "Terrain hillshade", visible: false, opacity: 0.55 },
   { id: "contours", label: "Contours", visible: false, opacity: 0.5 },
