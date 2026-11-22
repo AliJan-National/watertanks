@@ -16,7 +16,7 @@ export default defineConfig(({ command }) => ({
   // rewrites the import inside `maplibre-gl.js`, and the worker then fails to load ("Check that
   // the worker URL is correct"). Excluding it from pre-bundling keeps the worker URL intact.
   optimizeDeps: { exclude: ["maplibre-gl"] },
-  build: { target: "es2022", sourcemap: true, chunkSizeWarningLimit: 1600 },
+  build: { outDir: "docs", emptyOutDir: false, target: "es2022", sourcemap: true, chunkSizeWarningLimit: 1600 },
   test: {
     environment: "node",
     include: ["src/test/**/*.test.ts"],
