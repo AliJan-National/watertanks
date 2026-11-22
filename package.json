@@ -6,7 +6,7 @@
   "description": "TankBreach \u2014 tank leak & breach inundation web mapper (screening tool)",
   "scripts": {
     "dev": "vite --host 0.0.0.0 --port 5173",
-    "build": "tsc -b && vite build --outDir docs --emptyOutDir false",
+    "build": "tsc -b && node -e \"const fs = require('fs'); fs.copyFileSync('index.source.html', 'index.html');\" && vite build --outDir docs --emptyOutDir false && node scripts/sync-build.js",
     "preview": "vite preview --host 0.0.0.0 --port 4173",
     "typecheck": "tsc -p tsconfig.app.json --noEmit",
     "test": "vitest run",
