@@ -14,6 +14,13 @@ if (fs.existsSync(docsAssets)) {
   fs.cpSync(docsAssets, rootAssets, { recursive: true });
 }
 
+// Ensure maplibre worker is present in both root and docs assets
+const maplibreWorker = path.resolve(rootDir, "node_modules/maplibre-gl/dist/maplibre-gl-worker.mjs");
+if (fs.existsSync(maplibreWorker)) {
+  fs.copyFileSync(maplibreWorker, path.resolve(rootAssets, "maplibre-gl-worker.mjs"));
+  fs.copyFileSync(maplibreWorker, path.resolve(docsAssets, "maplibre-gl-worker.mjs"));
+}
+
 // 2. Copy docs/index.html to root index.html, stripping any fallback redirect
 const docsIndex = path.resolve(docsDir, "index.html");
 const rootIndex = path.resolve(rootDir, "index.html");
